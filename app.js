@@ -35,9 +35,9 @@ app.use(cors(corsOptions));
 
 // MongoDB setup
 const db = require('./config/keys').mongoURI;
-mongoose.connect(db, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(db)
   .then(() => console.log('MongoDB successfully connected'))
-  .catch(err => console.log(err));
+  .catch(err => console.log('MongoDB connection error:', err));
 
 // Initialize passport configuration
 app.use(passport.initialize());
