@@ -25,7 +25,7 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 const corsOptions = {
-  origin: 'https://itdesk-frontend.vercel.app/login',  // Your frontend URL
+  origin: 'https://itdesk-frontend.vercel.app',  // Your frontend URL
   credentials: true,  // Allow cookies (JWT tokens) to be sent in cross-origin requests
   methods: ['GET', 'POST', 'HEAD', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'], // Include 'Authorization' if sending JWT tokens
