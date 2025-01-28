@@ -25,9 +25,9 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 const corsOptions = {
-  origin: '*',
-  credentials: true,
-  methods: ['GET','POST','HEAD','PUT','PATCH','DELETE'],
+  origin: 'https://itdesk-frontend.vercel.app',  // Your frontend URL
+  credentials: true,  // Allow cookies to be sent in cross-origin requests
+  methods: ['GET', 'POST', 'HEAD', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type'],
   exposedHeaders: ['Content-Type']
 };
