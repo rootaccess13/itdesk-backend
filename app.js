@@ -26,13 +26,16 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 const corsOptions = {
   origin: 'https://itdesk-frontend.vercel.app',  // Your frontend URL
-  credentials: true,  // Allow cookies to be sent in cross-origin requests
+  credentials: true,  // Allow cookies (JWT tokens) to be sent in cross-origin requests
   methods: ['GET', 'POST', 'HEAD', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type'],
-  exposedHeaders: ['Content-Type']
+  allowedHeaders: ['Content-Type', 'Authorization'], // Include 'Authorization' if sending JWT tokens
+  exposedHeaders: ['Content-Type', 'Authorization'] // Expose 'Authorization' if needed in the response
 };
 
 app.use(cors(corsOptions));
+
+// Handle OPTIONS preflight requests
+app.options('*', cors(corsOptions));
 
 
 // MongoDB setup
