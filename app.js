@@ -24,7 +24,14 @@ const app = express();
 // Middleware setup
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.use(cors());
+const corsOptions = {
+  origin: 'https://itdesk-frontend.vercel.app',
+  methods: 'GET, POST, PUT, DELETE',
+  allowedHeaders: 'Content-Type, Authorization',
+};
+
+app.use(cors(corsOptions));
+
 
 // MongoDB setup
 const db = require('./config/keys').mongoURI;

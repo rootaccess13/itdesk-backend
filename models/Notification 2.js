@@ -12,7 +12,7 @@ const NotificationSchema = new Schema({
     },
     banner: {
         type: String,
-        default: 'http://localhost:5001/uploads/banners/1722262677123_Screen Shot 2024-07-26 at 15.01.52 PM.png'
+        default: 'https://itdesk-backend.vercel.app/uploads/banners/1722262677123_Screen Shot 2024-07-26 at 15.01.52 PM.png'
     },
     is_read: {
         type: Boolean,
