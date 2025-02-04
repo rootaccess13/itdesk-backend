@@ -24,7 +24,7 @@ const upload = multer({
 const uploadToS3 = async (file) => {
   const fileKey = `${Date.now()}_${uuidv4()}_${file.originalname}`;
   const params = {
-    Bucket: process.env.AWS_S3_BUCKET_NAME, // Ensure this environment variable is set
+    Bucket: process.env.AWS_S3_BUCKET, // Ensure this environment variable is set
     Key: fileKey,
     Body: file.buffer, // File data stored in memory
     ContentType: file.mimetype,
