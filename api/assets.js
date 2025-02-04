@@ -32,7 +32,7 @@ const uploadToS3 = async (file) => {
 
   try {
     const data = await s3.send(new PutObjectCommand(params));
-    return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+    return `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
   } catch (error) {
     console.error('Error uploading file to S3:', error.message);
     throw new Error('Error uploading file to S3');
