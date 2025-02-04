@@ -3,25 +3,41 @@ const router = express.Router();
 const Asset = require('../models/Asset');
 const AssetsFolders = require('../models/AssetsFolder');
 const multer = require('multer');
-const path = require('path');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const { v4: uuidv4 } = require('uuid'); // Import uuid to generate unique IDs
 
-// Configure storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Save files to the 'uploads' directory
-  },
-  filename: (req, file, cb) => {
-    // Use original file name and add timestamp to avoid collisions
-    cb(null, `${Date.now()}_${file.originalname}`);
-  },
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  }
 });
 
-// Initialize multer with diskStorage
-const upload = multer({ 
-  storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 } // Set file size limit (10 MB)
+// Multer setup with memory storage
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // Set file size limit (10 MB)
 });
+
+// Helper function to upload a file to S3
+const uploadToS3 = async (file) => {
+  const fileKey = `${Date.now()}_${uuidv4()}_${file.originalname}`;
+  const params = {
+    Bucket: process.env.AWS_S3_BUCKET_NAME, // Ensure this environment variable is set
+    Key: fileKey,
+    Body: file.buffer, // File data stored in memory
+    ContentType: file.mimetype,
+  };
+
+  try {
+    const data = await s3.send(new PutObjectCommand(params));
+    return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+  } catch (error) {
+    console.error('Error uploading file to S3:', error.message);
+    throw new Error('Error uploading file to S3');
+  }
+};
 
 router.post('/create', upload.array('attachments', 10), async (req, res) => {
   const {
@@ -42,6 +58,9 @@ router.post('/create', upload.array('attachments', 10), async (req, res) => {
     }
 
     const assets = await Promise.all(req.files.map(async (file) => {
+      // Upload file to S3
+      const fileUrl = await uploadToS3(file);
+
       // Generate a unique assetTag
       const assetTag = `TAG-${uuidv4()}`; // Use UUID for unique tag
 
@@ -60,7 +79,7 @@ router.post('/create', upload.array('attachments', 10), async (req, res) => {
         location: location || '',
         hardwareSpecs: hardwareSpecs || '',
         softwareVersion: softwareVersion || '',
-        assetPath: `uploads/${file.filename}`, // Save file path to disk
+        assetPath: fileUrl, // Save S3 URL of the uploaded file
         category: folder.category,
         folder: folderId,
         dateCreated: Date.now(),
@@ -81,6 +100,7 @@ router.post('/create', upload.array('attachments', 10), async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
 
 // Get all assets
 router.get('/', (req, res) => {
