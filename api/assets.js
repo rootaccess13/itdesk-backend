@@ -148,14 +148,10 @@ router.delete('/folder/:id', async (req, res) => {
     const folderId = req.params.id;
     
     // Find the folder and delete it
-    const deletedFolder = await AssetsFolder.findByIdAndDelete(folderId);
-
+    const deletedFolder = await AssetsFolders.findByIdAndDelete(folderId);
     if (!deletedFolder) {
       return res.status(404).json({ msg: 'Folder not found' });
     }
-
-    // Optionally, you may want to delete all the assets in the folder as well
-    // You can do this by removing references to this folder in the assets collection.
     await Asset.updateMany(
       { _id: { $in: deletedFolder.assets } },
       { $pull: { folders: folderId } } // Assuming assets have a reference to folders
