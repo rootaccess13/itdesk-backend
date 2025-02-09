@@ -133,7 +133,7 @@ router.put('/:id', async (req, res) => {
 // Delete an asset by ID
 router.delete('/:id', async (req, res) => {
   try {
-    const asset = await Asset.findByIdAndRemove(req.params.id);
+    const asset = await Asset.findByIdAndDelete(req.params.id);
     if (!asset) {
       return res.status(404).json({ msg: 'Asset not found' });
     }
