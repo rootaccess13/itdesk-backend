@@ -130,9 +130,10 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// Delete an asset by ID
 router.delete('/:id', async (req, res) => {
   try {
-    const asset = await Asset.findByIdAndDelete(req.params.id);  // Use findByIdAndDelete
+    const asset = await Asset.findByIdAndRemove(req.params.id);
     if (!asset) {
       return res.status(404).json({ msg: 'Asset not found' });
     }
@@ -140,6 +141,30 @@ router.delete('/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting asset:', err.message);
     res.status(400).json(err);
+  }
+});
+router.delete('/folder/:id', async (req, res) => {
+  try {
+    const folderId = req.params.id;
+    
+    // Find the folder and delete it
+    const deletedFolder = await AssetsFolder.findByIdAndDelete(folderId);
+
+    if (!deletedFolder) {
+      return res.status(404).json({ msg: 'Folder not found' });
+    }
+
+    // Optionally, you may want to delete all the assets in the folder as well
+    // You can do this by removing references to this folder in the assets collection.
+    await Asset.updateMany(
+      { _id: { $in: deletedFolder.assets } },
+      { $pull: { folders: folderId } } // Assuming assets have a reference to folders
+    );
+
+    res.json({ success: true, msg: 'Folder deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting folder:', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
