@@ -29,6 +29,7 @@ const UserSchema = new Schema({
     type: String,
     required: false
   },
+  idNumber: { type: String, required: true, unique: true },
   password: {
     type: String,
     required: true
