@@ -26,48 +26,98 @@ router.get(
   }
 );
 // Registration Route
-router.post('/register', (req, res) => {
-  User.findOne({ email: req.body.email }).then(user => {
+router.post('/register', async (req, res) => {
+  try {
+    const {
+      googleId,
+      firstName,
+      lastName,
+      username,
+      email,
+      phoneNumber,
+      idNumber, // Added ID Number
+      password,
+      role = 'user' // Default role if not provided
+    } = req.body;
+
+    // Check for existing email
+    let user = await User.findOne({ email });
     if (user) {
       return res.status(400).json({ email: 'Email already exists' });
-    } else {
-      User.findOne({ username: req.body.username }).then(user => {
-        if (user) {
-          return res.status(400).json({ username: 'Username already exists' });
-        } else {
-          const newUser = new User({
-            googleId: req.body.googleId,
-            firstName: req.body.firstName,
-            lastName: req.body.lastName,
-            username: req.body.username,
-            email: req.body.email,
-            phoneNumber: req.body.phoneNumber,
-            password: req.body.password,
-            role: req.body.role // Assuming you pass the role during registration
-          });
+    }
 
-          bcrypt.genSalt(10, (err, salt) => {
-            bcrypt.hash(newUser.password, salt, async (err, hash) => {
-              if (err) throw err;
-              newUser.password = hash;
-              await sendAccountVerification(newUser.email);
-              newUser.save()
-                .then(user => res.json(user))
-                .catch(err => {
-                  if (err.code === 11000) {
-                    // Duplicate key error
-                    const field = Object.keys(err.keyPattern)[0];
-                    res.status(400).json({ [field]: `${field.charAt(0).toUpperCase() + field.slice(1)} already exists` });
-                  } else {
-                    res.status(500).json({ error: 'Server error' });
-                  }
-                });
-            });
-          });
-        }
+    // Check for existing username
+    user = await User.findOne({ username });
+    if (user) {
+      return res.status(400).json({ username: 'Username already exists' });
+    }
+
+    // Check for existing ID number (if it's meant to be unique)
+    user = await User.findOne({ idNumber });
+    if (user) {
+      return res.status(400).json({ idNumber: 'ID Number already exists' });
+    }
+
+    // Create new user object
+    const newUser = new User({
+      googleId: googleId || null,
+      firstName,
+      lastName,
+      username,
+      email,
+      phoneNumber,
+      idNumber,
+      password,
+      role,
+      isVerified: false, // Assuming you want to track verification status
+      status: 'pending' // For admin confirmation as per frontend message
+    });
+
+    // If not a Google OAuth user, hash the password
+    if (!googleId) {
+      const salt = await bcrypt.genSalt(10);
+      newUser.password = await bcrypt.hash(password, salt);
+    }
+
+    // Send verification email
+    await sendAccountVerification(newUser.email);
+
+    // Save the user
+    const savedUser = await newUser.save();
+
+    // Return success response
+    res.status(201).json({
+      message: 'Registration successful! Please wait for administrator confirmation.',
+      user: {
+        id: savedUser._id,
+        firstName: savedUser.firstName,
+        lastName: savedUser.lastName,
+        username: savedUser.username,
+        email: savedUser.email,
+        phoneNumber: savedUser.phoneNumber,
+        idNumber: savedUser.idNumber,
+        role: savedUser.role,
+        status: savedUser.status
+      }
+    });
+
+  } catch (err) {
+    console.error('Registration error:', err);
+
+    // Handle duplicate key errors
+    if (err.code === 11000) {
+      const field = Object.keys(err.keyPattern)[0];
+      return res.status(400).json({ 
+        [field]: `${field.charAt(0).toUpperCase() + field.slice(1)} already exists` 
       });
     }
-  });
+
+    // Handle other errors
+    res.status(500).json({ 
+      error: 'Server error occurred during registration',
+      details: err.message 
+    });
+  }
 });
 
 router.post('/login', (req, res) => {
